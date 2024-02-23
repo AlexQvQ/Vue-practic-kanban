@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Канбан-доска 2.0</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+
+        }
+
+        .column {
+
+            margin: 0 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+        }
+
+        .task {
+            background-color: #f0f0f0;
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 5px;
+            cursor: grab;
+        }
+
+        #app {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app">
+        <div class="column" @drop="dropHandler('begin')" @dragover.prevent>
+            <h2>Сделать</h2>
+            <div v-for="task in tasks.begin" :key="task.id" v-bind:id="task.id" class="task" @dragstart="dragStartHandler(task.id, task.text)"
+                draggable="true">
+                {{ task.text }}
+                <button @click="deleteTask('begin', task.id)">Delete</button>
+            </div>
+            <button @click="addTask('begin')">Добавить задачу</button>
+        </div>
+
+        <div class="column" @drop="dropHandler('inProgress')" @dragover.prevent>
+            <h2>В процессе</h2>
+            <div v-for="task in tasks.inProgress" :key="task.id" v-bind:id="task.id" class="task" @dragstart="dragStartHandler(task.id, task.text)"
+                draggable="true">
+                {{ task.text }}
+            </div>
+
+        </div>
+
+        <div class="column" @drop="dropHandler('completed')" @dragover.prevent>
+            <h2>Завершено</h2>
+            <div v-for="task in tasks.completed" :key="task.id" v-bind:id="task.id" class="task" @dragstart="dragStartHandler(task.id, task.text)"
+                draggable="true">
+                {{ task.text }}
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                tasks: {
+                    begin: [],
+                    inProgress: [],
+                    completed: []
+                },
+                draggedTaskId: null,
+                draggedTaskText: null,
+            },
+            methods: {
+                addTask(column, data = null) {
+                    let text = "";
+                    if(data === null){
+                        text = prompt('Введите текст задачи:');
+                    } else {
+                        text = data;
+                    }
+                    if (text) {
+                        this.tasks[column].push({ id: Date.now(), text });
+                    }
+                },
+                deleteTask(column, taskId) {
+                    this.tasks[column] = this.tasks[column].filter(task => task.id !== taskId);
+                },
+                dragStartHandler(taskId, taskText) {
+                    this.draggedTaskId = taskId;
+                    this.draggedTaskText = taskText;
+
+                },
+
+                dropHandler(column) {
+
+                    if (this.draggedTaskId) {
+                        
+                        let task = this.tasks[column].findIndex(task => task.id == this.draggedTaskId);
+                        task.textContent = this.draggedTaskText;
+                        
+
+                        if (task) {
+
+                            this.deleteTask('begin', this.draggedTaskId);
+                            this.deleteTask('inProgress', this.draggedTaskId);
+                            this.deleteTask('completed', this.draggedTaskId);
+                            this.addTask(column, this.draggedTaskText);
+                        }
+                        this.draggedTaskId = null;
+                    }
+                }
+
+               
+            }
+        });
+    </script>
+</body>
+
+</html>
